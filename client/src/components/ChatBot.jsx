@@ -3,20 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, Minimize2, Maximize2 } from 'lucide-react';
 import axios from 'axios';
 
-export default function ChatbotWidget() {
+export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, type: 'bot', text: 'Hello! I am your AI Financial Advisor. Ask me anything about loans, interest rates, or your eligibility.' }
+    { id: 1, sender: 'bot', text: 'Hello! I am your AI Financial Advisor. Ask me anything about loans, interest rates, or your eligibility.' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const sessionId = useRef(Date.now().toString()).current;
-
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -24,30 +22,28 @@ export default function ChatbotWidget() {
   }, [messages, isTyping]);
 
   const handleSend = async (e) => {
-    e?.preventDefault();
+    e.preventDefault();
     if (!input.trim()) return;
-    
-    const userMsg = { id: Date.now(), type: 'user', text: input };
-    setMessages(prev => [...prev, userMsg]);
+
+    const userMessage = { id: Date.now(), sender: 'user', text: input };
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
 
     try {
-      const response = await axios.post('/api/chat', {
-        message: userMsg.text,
-        sessionId
+      // Connect to the backend /api/chat which uses OpenAI (or fallback)
+      const response = await axios.post('/api/chat', { 
+        message: userMessage.text,
+        sessionId: 'user-session-' + new Date().getDate() // Simple daily session 
       });
       
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        type: 'bot',
-        text: response.data.reply
-      }]);
+      const botMessage = { id: Date.now() + 1, sender: 'bot', text: response.data.reply };
+      setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        type: 'bot',
-        text: "I'm sorry, I'm having trouble connecting right now. Please try again later."
+      setMessages(prev => [...prev, { 
+        id: Date.now() + 1, 
+        sender: 'bot', 
+        text: 'Sorry, I am having trouble connecting to my server right now. Please try again later.' 
       }]);
     } finally {
       setIsTyping(false);
@@ -130,14 +126,14 @@ export default function ChatbotWidget() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       key={msg.id}
-                      className={`flex gap-3 ${msg.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                      className={`flex gap-3 ${msg.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                     >
-                      <div className={`w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center ${msg.type === 'user' ? 'bg-indigo-500' : 'bg-slate-700'}`}>
-                        {msg.type === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
+                      <div className={`w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center ${msg.sender === 'user' ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                        {msg.sender === 'user' ? <User className="w-4 h-4 text-white" /> : <Bot className="w-4 h-4 text-white" />}
                       </div>
                       <div 
                         className={`px-4 py-2.5 rounded-2xl max-w-[80%] text-sm leading-relaxed ${
-                          msg.type === 'user' 
+                          msg.sender === 'user' 
                             ? 'bg-indigo-500 text-white rounded-tr-sm' 
                             : 'bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-200 rounded-tl-sm border dark:border-slate-700 border-slate-200 shadow-sm'
                         }`}
@@ -163,13 +159,12 @@ export default function ChatbotWidget() {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-3" style={{ background: 'var(--c-header-bg)', borderTop: '1px solid var(--c-border-soft)' }}>
+                <form onSubmit={handleSend} className="p-3" style={{ background: 'var(--c-header-bg)', borderTop: '1px solid var(--c-border-soft)' }}>
                   <div className="relative flex items-center">
                     <input
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                       placeholder="Ask a question..."
                       className="w-full pl-4 pr-12 py-3 rounded-xl text-sm transition-colors"
                       style={{ 
@@ -180,14 +175,14 @@ export default function ChatbotWidget() {
                       }}
                     />
                     <button 
-                      onClick={handleSend}
+                      type="submit" 
                       disabled={!input.trim() || isTyping}
                       className="absolute right-2 p-2 rounded-lg text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 disabled:opacity-50 transition-colors"
                     >
                       <Send className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
+                </form>
               </>
             )}
           </motion.div>

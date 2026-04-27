@@ -200,12 +200,21 @@ app.post('/api/chat', async (req, res) => {
       });
       botResponse = completion.choices[0].message.content;
     } else {
-      botResponse = `This is a simulated response (OpenAI key not found). You said: "${message}".`;
+      // Fallback: Use free public AI API (Pollinations text model) if no OpenAI key is set
+      try {
+        const prompt = `You are an AI financial advisor. Answer this: ${message}`;
+        const response = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}`);
+        botResponse = await response.text();
+      } catch (err) {
+        console.error("Free AI API failed:", err);
+        botResponse = `This is a simulated response (AI unavailable). You said: "${message}".`;
+      }
     }
 
     await Chat.create({ sessionId, role: 'assistant', content: botResponse });
     res.json({ reply: botResponse });
   } catch (error) {
+    console.error('Chat error:', error);
     res.status(500).json({ error: 'Failed to process chat message' });
   }
 });
