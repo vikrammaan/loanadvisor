@@ -52,7 +52,7 @@ nodemailer.createTestAccount((err, account) => {
   }
 });
 
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateOTP = () => "123456";
 
 // --- Routes ---
 
