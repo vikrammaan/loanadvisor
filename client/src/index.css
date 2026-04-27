@@ -124,21 +124,55 @@
 
 /* ---- INPUT DARK ---- */
 .input-dark {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 12px;
-  color: #e2e8f0;
+  color: #e2e8f0 !important;
   padding: 12px 16px;
   transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%;
   outline: none;
+  font-size: 14px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .input-dark:focus {
-  border-color: rgba(99, 102, 241, 0.6);
+  border-color: rgba(99, 102, 241, 0.6) !important;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 .input-dark::placeholder {
-  color: #475569;
+  color: #475569 !important;
+}
+
+/* ---- FORCE ALL INPUTS/SELECTS/TEXTAREAS DARK ---- */
+input, select, textarea, input[type="text"], input[type="email"],
+input[type="password"], input[type="number"], input[type="search"] {
+  color: #e2e8f0 !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: #475569 !important;
+  opacity: 1;
+}
+/* Select arrow and text */
+select {
+  color: #e2e8f0 !important;
+  background-color: #0d1220 !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+/* Dropdown options */
+option {
+  background-color: #0d1220 !important;
+  color: #e2e8f0 !important;
+}
+/* Autofill override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px #0d1220 inset !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+  caret-color: #e2e8f0;
 }
 
 /* ---- BADGE ---- */

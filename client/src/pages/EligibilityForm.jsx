@@ -97,22 +97,8 @@ export default function EligibilityForm() {
     }
   };
 
-  const creditColor = formData.creditScore >= 750 ? '#34d399' : formData.creditScore >= 670 ? '#fbbf24' : '#fb7185';
+  const creditColor = formData.creditScore >= 750 ? '#34d399' : formData.creditScore >= 700 ? '#fbbf24' : formData.creditScore >= 670 ? '#fbbf24' : '#fb7185';
   const creditLabel = formData.creditScore >= 750 ? 'Excellent' : formData.creditScore >= 700 ? 'Good' : formData.creditScore >= 670 ? 'Fair' : 'Poor';
-
-  const inputStyle = {
-    width: '100%',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '12px',
-    color: '#e2e8f0',
-    padding: '12px 16px 12px 2.75rem',
-    outline: 'none',
-    fontSize: '14px',
-    transition: 'border-color 0.2s',
-  };
-
-  const selectStyle = { ...inputStyle, paddingLeft: '2.75rem' };
 
   return (
     <div className="max-w-2xl mx-auto py-2">
@@ -266,11 +252,11 @@ export default function EligibilityForm() {
                     <h3 className="text-lg font-semibold text-white mb-5">Personal Details</h3>
                     <InputField label="Full Name" icon={User}>
                       <input type="text" name="name" value={formData.name} onChange={handleChange} required
-                        style={inputStyle} placeholder="John Doe" />
+                        className="input-dark" style={{ paddingLeft: '2.75rem' }} placeholder="John Doe" />
                     </InputField>
                     <InputField label="Email Address" icon={Mail} hint="We'll send your results here.">
                       <input type="email" name="email" value={formData.email} onChange={handleChange} required
-                        style={inputStyle} placeholder="john@example.com" />
+                        className="input-dark" style={{ paddingLeft: '2.75rem' }} placeholder="john@example.com" />
                     </InputField>
                   </motion.div>
                 )}
@@ -282,11 +268,12 @@ export default function EligibilityForm() {
 
                     <InputField label="Annual Income ($)" icon={DollarSign}>
                       <input type="number" name="income" value={formData.income} onChange={handleChange} required min="1000"
-                        style={inputStyle} placeholder="e.g. 60000" />
+                        className="input-dark" style={{ paddingLeft: '2.75rem' }} placeholder="e.g. 60000" />
                     </InputField>
 
                     <InputField label="Employment Status" icon={Briefcase}>
-                      <select name="employmentStatus" value={formData.employmentStatus} onChange={handleChange} required style={selectStyle}>
+                      <select name="employmentStatus" value={formData.employmentStatus} onChange={handleChange} required
+                        className="input-dark" style={{ paddingLeft: '2.75rem' }}>
                         <option value="" style={{ background: '#0d1220' }}>Select status...</option>
                         {EMPLOYMENT_OPTIONS.map(o => <option key={o} value={o} style={{ background: '#0d1220' }}>{o}</option>)}
                       </select>
@@ -320,11 +307,12 @@ export default function EligibilityForm() {
 
                     <InputField label="Requested Amount ($)" icon={DollarSign}>
                       <input type="number" name="requestedAmount" value={formData.requestedAmount} onChange={handleChange} required min="500"
-                        style={inputStyle} placeholder="e.g. 25000" />
+                        className="input-dark" style={{ paddingLeft: '2.75rem' }} placeholder="e.g. 25000" />
                     </InputField>
 
                     <InputField label="Loan Purpose" icon={Target}>
-                      <select name="purpose" value={formData.purpose} onChange={handleChange} required style={selectStyle}>
+                      <select name="purpose" value={formData.purpose} onChange={handleChange} required
+                        className="input-dark" style={{ paddingLeft: '2.75rem' }}>
                         <option value="" style={{ background: '#0d1220' }}>Select purpose...</option>
                         {PURPOSE_OPTIONS.map(o => <option key={o} value={o} style={{ background: '#0d1220' }}>{o}</option>)}
                       </select>
