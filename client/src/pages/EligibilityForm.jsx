@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck, CheckCircle2, XCircle, User, Mail,
   Briefcase, DollarSign, Target, ChevronRight, RotateCcw,
-  TrendingUp, Clock, Percent, BadgeCheck
+  TrendingUp, Clock, Percent, BadgeCheck, FileText, Upload, AlertTriangle
 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -12,6 +12,7 @@ const STEPS = [
   { id: 1, label: 'Personal', icon: User },
   { id: 2, label: 'Financial', icon: Briefcase },
   { id: 3, label: 'Loan', icon: Target },
+  { id: 4, label: 'Documents', icon: FileText },
 ];
 
 const EMPLOYMENT_OPTIONS = [
@@ -54,6 +55,7 @@ function InputField({ label, icon: Icon, children, hint }) {
 export default function EligibilityForm() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -61,35 +63,74 @@ export default function EligibilityForm() {
     employmentStatus: '', requestedAmount: '', purpose: '', tenure: '36',
   });
 
+  const [documents, setDocuments] = useState({
+    aadhaar: null,
+    salarySlip: null
+  });
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e, type) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDocuments(prev => ({
+          ...prev,
+          [type]: reader.result
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const resetForm = () => {
     setResult(null);
     setStep(1);
     setFormData({ name: '', email: '', income: '', creditScore: 700, employmentStatus: '', requestedAmount: '', purpose: '', tenure: '36' });
+    setDocuments({ aadhaar: null, salarySlip: null });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (step < 3) {
+    if (step < 4) {
       setStep(step + 1);
       return;
     }
+    
+    setScanning(true);
+    // Simulate AI document scanning
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    setScanning(false);
     setLoading(true);
+
     try {
       const response = await axios.post('/api/eligibility', {
         ...formData,
         income: Number(formData.income),
         requestedAmount: Number(formData.requestedAmount),
+        documents: [
+          { type: 'aadhaar', data: documents.aadhaar },
+          { type: 'salary_slip', data: documents.salarySlip }
+        ].filter(d => d.data)
       });
+      
       setResult({
         eligible: response.data.eligible,
         amount: response.data.maxAmount,
         rate: response.data.rate,
+        fraudScore: response.data.fraudScore,
+        flags: response.data.flags,
+        status: response.data.status
       });
-      toast.success(response.data.eligible ? '🎉 Pre-approval successful!' : 'Application processed.');
+      
+      if (response.data.fraudScore > 50) {
+        toast.error('Application flagged for review.');
+      } else {
+        toast.success(response.data.eligible ? '🎉 Pre-approval successful!' : 'Application processed.');
+      }
     } catch {
       toast.error('Failed to process application. Please try again.');
     } finally {
@@ -104,12 +145,51 @@ export default function EligibilityForm() {
     <div className="max-w-2xl mx-auto py-2">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white mb-1">Loan Eligibility Check</h1>
-        <p className="text-slate-500 text-sm">Get an instant pre-approval decision — no credit score impact.</p>
+        <p className="text-slate-500 text-sm">Get an instant pre-approval decision with real-time AI verification.</p>
       </div>
 
       <AnimatePresence mode="wait">
+        {/* ── SCANNING / VERIFYING ── */}
+        {scanning && (
+          <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="glass-card rounded-3xl p-16 text-center"
+          >
+            <div className="relative inline-block mb-6">
+               <motion.div 
+                 animate={{ 
+                   scale: [1, 1.1, 1],
+                   opacity: [0.5, 1, 0.5]
+                 }}
+                 transition={{ repeat: Infinity, duration: 2 }}
+                 className="absolute inset-0 bg-indigo-500/20 rounded-full blur-xl"
+               />
+              <div className="w-20 h-20 rounded-full border-4 border-indigo-900 border-t-indigo-400 animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <ShieldCheck className="w-7 h-7 text-indigo-400" />
+              </div>
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">AI Document Verification…</h3>
+            <p className="text-slate-500 text-sm">Scanning documents for authenticity and income patterns.</p>
+            
+            <div className="mt-8 space-y-2 max-w-xs mx-auto">
+              <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 3 }}
+                  className="h-full bg-indigo-500" 
+                />
+              </div>
+              <div className="flex justify-between text-[10px] uppercase font-bold text-slate-600">
+                <span>OCR Analysis</span>
+                <span>Fraud Check</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* ── LOADING ── */}
-        {loading && (
+        {loading && !scanning && (
           <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="glass-card rounded-3xl p-16 text-center"
           >
@@ -119,23 +199,45 @@ export default function EligibilityForm() {
                 <TrendingUp className="w-7 h-7 text-indigo-400" />
               </div>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Analyzing your profile…</h3>
-            <p className="text-slate-500 text-sm">Our AI is evaluating your eligibility and fetching the best rates.</p>
+            <h3 className="text-xl font-semibold text-white mb-2">Calculating Terms…</h3>
+            <p className="text-slate-500 text-sm">Finalizing your personalized loan offer.</p>
           </motion.div>
         )}
 
         {/* ── RESULT ── */}
-        {!loading && result && (
+        {!loading && !scanning && result && (
           <motion.div key="result" initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
             className="glass-card rounded-3xl overflow-hidden"
           >
             {/* Header */}
-            <div className={`p-8 text-center relative overflow-hidden ${result.eligible
-              ? 'bg-gradient-to-br from-emerald-900/50 to-teal-900/30'
-              : 'bg-gradient-to-br from-rose-900/50 to-red-900/30'}`}
+            <div className={`p-8 text-center relative overflow-hidden ${result.status === 'rejected'
+              ? 'bg-gradient-to-br from-rose-900/50 to-red-900/30'
+              : result.status === 'pending'
+                ? 'bg-gradient-to-br from-indigo-900/50 to-purple-900/30'
+                : 'bg-gradient-to-br from-emerald-900/50 to-teal-900/30'}`}
             >
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.04),transparent)] pointer-events-none" />
-              {result.eligible ? (
+              {result.status === 'rejected' ? (
+                 <>
+                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}
+                     className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-rose-500/20 border-2 border-rose-500/30 mb-5"
+                   >
+                     <XCircle className="w-10 h-10 text-rose-400" />
+                   </motion.div>
+                   <h2 className="text-3xl font-bold text-white mb-2">Application Rejected</h2>
+                   <p className="text-rose-300/80 text-sm">Your application was automatically rejected by our fraud detection system.</p>
+                 </>
+              ) : result.status === 'pending' ? (
+                <>
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}
+                    className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-500/20 border-2 border-indigo-500/30 mb-5"
+                  >
+                    <Clock className="w-10 h-10 text-indigo-400" />
+                  </motion.div>
+                  <h2 className="text-3xl font-bold text-white mb-2">Under Review</h2>
+                  <p className="text-indigo-300/80 text-sm">Your application has been flagged for manual verification by our risk team.</p>
+                </>
+              ) : (
                 <>
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}
                     className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/30 mb-5"
@@ -143,30 +245,20 @@ export default function EligibilityForm() {
                     <CheckCircle2 className="w-10 h-10 text-emerald-400" />
                   </motion.div>
                   <h2 className="text-3xl font-bold text-white mb-2">You're Pre-Approved! 🎉</h2>
-                  <p className="text-emerald-300/80 text-sm">Based on your profile, here are your personalized loan offers.</p>
-                </>
-              ) : (
-                <>
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}
-                    className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-rose-500/20 border-2 border-rose-500/30 mb-5"
-                  >
-                    <XCircle className="w-10 h-10 text-rose-400" />
-                  </motion.div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Not Eligible Yet</h2>
-                  <p className="text-rose-300/80 text-sm">Based on your income-to-loan ratio, we can't pre-approve this request right now.</p>
+                  <p className="text-emerald-300/80 text-sm">Your documents have been verified. Here is your offer.</p>
                 </>
               )}
             </div>
 
             {/* Body */}
             <div className="p-8">
-              {result.eligible ? (
+              {result.status !== 'rejected' && (
                 <>
                   <div className="grid grid-cols-3 gap-4 mb-8">
                     {[
                       { label: 'Max Loan Amount', value: `$${result.amount.toLocaleString()}`, icon: DollarSign, color: '#6366f1' },
                       { label: 'Interest Rate', value: `${result.rate}% p.a.`, icon: Percent, color: '#34d399' },
-                      { label: 'Max Tenure', value: '60 months', icon: Clock, color: '#06b6d4' },
+                      { label: 'Fraud Score', value: `${result.fraudScore}/100`, icon: ShieldCheck, color: result.fraudScore < 30 ? '#34d399' : '#fbbf24' },
                     ].map(item => (
                       <div key={item.label} className="rounded-2xl p-4 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <item.icon className="w-5 h-5 mx-auto mb-2" style={{ color: item.color }} />
@@ -176,24 +268,37 @@ export default function EligibilityForm() {
                     ))}
                   </div>
 
+                  {result.flags && result.flags.length > 0 && (
+                    <div className="rounded-2xl p-4 mb-6 space-y-2" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)' }}>
+                       <div className="flex items-center gap-2 text-amber-400 mb-1">
+                         <AlertTriangle className="w-4 h-4" />
+                         <span className="text-xs font-bold uppercase">System Alerts</span>
+                       </div>
+                       {result.flags.map((flag, i) => (
+                         <p key={i} className="text-xs text-slate-300 flex items-center gap-2">
+                           <span className="w-1 h-1 bg-amber-400 rounded-full" /> {flag}
+                         </p>
+                       ))}
+                    </div>
+                  )}
+
                   <div className="rounded-2xl p-4 mb-6 flex items-start gap-3" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
                     <BadgeCheck className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-slate-300">
-                      Your application has been saved. A loan specialist will contact you at <span className="text-indigo-400 font-medium">{formData.email}</span> within 1-2 business days.
+                      {result.status === 'pending' 
+                        ? "Our team is reviewing your documents. You'll receive an email update within 24 hours."
+                        : `Your application has been saved. A loan specialist will contact you at ${formData.email} shortly.`}
                     </p>
                   </div>
                 </>
-              ) : (
+              )}
+
+              {result.status === 'rejected' && (
                 <div className="rounded-2xl p-5 mb-6" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <h4 className="text-sm font-semibold text-slate-300 mb-3">Ways to improve your eligibility:</h4>
-                  <ul className="space-y-2 text-sm text-slate-400">
-                    {['Increase your annual income or add a co-applicant', 'Reduce the requested loan amount', 'Improve your credit score by paying off existing debts', 'Try applying for a secured loan instead'].map(tip => (
-                      <li key={tip} className="flex items-center gap-2">
-                        <ChevronRight className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                        {tip}
-                      </li>
-                    ))}
-                  </ul>
+                  <h4 className="text-sm font-semibold text-slate-300 mb-3 text-center">Safety Notice</h4>
+                  <p className="text-xs text-slate-400 text-center leading-relaxed">
+                    Our AI detected discrepancies in the information provided. If you believe this is an error, please contact our support team with valid identification documents.
+                  </p>
                 </div>
               )}
 
@@ -205,7 +310,7 @@ export default function EligibilityForm() {
         )}
 
         {/* ── FORM ── */}
-        {!loading && !result && (
+        {!loading && !scanning && !result && (
           <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="glass-card rounded-3xl p-8"
           >
@@ -223,7 +328,7 @@ export default function EligibilityForm() {
                       >
                         {step > s.id ? <CheckCircle2 className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
                       </div>
-                      <span className="text-xs mt-1.5 font-medium" style={{ color: step >= s.id ? '#a78bfa' : '#475569' }}>{s.label}</span>
+                      <span className="text-[10px] mt-1.5 font-bold uppercase tracking-wider" style={{ color: step >= s.id ? '#a78bfa' : '#475569' }}>{s.label}</span>
                     </div>
                     {i < STEPS.length - 1 && (
                       <div className="flex-1 h-px mx-2 mb-5 transition-all duration-500"
@@ -238,7 +343,7 @@ export default function EligibilityForm() {
               <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
                 <motion.div className="h-full rounded-full"
                   style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6)' }}
-                  animate={{ width: `${(step / 3) * 100}%` }}
+                  animate={{ width: `${(step / 4) * 100}%` }}
                   transition={{ duration: 0.4, ease: 'easeInOut' }}
                 />
               </div>
@@ -266,9 +371,9 @@ export default function EligibilityForm() {
                   <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
                     <h3 className="text-lg font-semibold text-white mb-5">Financial Information</h3>
 
-                    <InputField label="Annual Income ($)" icon={DollarSign}>
+                    <InputField label="Monthly Income ($)" icon={DollarSign}>
                       <input type="number" name="income" value={formData.income} onChange={handleChange} required min="1000"
-                        className="input-dark" style={{ paddingLeft: '2.75rem' }} placeholder="e.g. 60000" />
+                        className="input-dark" style={{ paddingLeft: '2.75rem' }} placeholder="e.g. 5000" />
                     </InputField>
 
                     <InputField label="Employment Status" icon={Briefcase}>
@@ -333,12 +438,59 @@ export default function EligibilityForm() {
                         <span>12 mo</span><span>36 mo</span><span>60 mo</span><span>84 mo</span>
                       </div>
                     </div>
+                  </motion.div>
+                )}
 
-                    {/* Consent note */}
+                {/* STEP 4 */}
+                {step === 4 && (
+                  <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                    <h3 className="text-lg font-semibold text-white mb-2">Identity & Income Verification</h3>
+                    <p className="text-xs text-slate-500 mb-6">Upload clear documents for AI-powered instant verification.</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Aadhaar / PAN */}
+                      <div className="relative group">
+                         <input type="file" accept="image/*" className="hidden" id="aadhaar-upload" onChange={(e) => handleFileChange(e, 'aadhaar')} />
+                         <label htmlFor="aadhaar-upload" className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all ${documents.aadhaar ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-700 hover:border-indigo-500 bg-slate-800/50'}`}>
+                           {documents.aadhaar ? (
+                             <>
+                               <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-2" />
+                               <span className="text-xs font-bold text-emerald-500 uppercase">Aadhaar / PAN Uploaded</span>
+                             </>
+                           ) : (
+                             <>
+                               <Upload className="w-8 h-8 text-slate-500 mb-2 group-hover:text-indigo-400 transition-colors" />
+                               <span className="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-200">Aadhaar / PAN Card</span>
+                               <span className="text-[10px] text-slate-600 mt-1">PNG, JPG up to 10MB</span>
+                             </>
+                           )}
+                         </label>
+                      </div>
+
+                      {/* Salary Slip */}
+                      <div className="relative group">
+                         <input type="file" accept="image/*" className="hidden" id="salary-upload" onChange={(e) => handleFileChange(e, 'salarySlip')} />
+                         <label htmlFor="salary-upload" className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed cursor-pointer transition-all ${documents.salarySlip ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-700 hover:border-indigo-500 bg-slate-800/50'}`}>
+                           {documents.salarySlip ? (
+                             <>
+                               <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-2" />
+                               <span className="text-xs font-bold text-emerald-500 uppercase">Salary Slip Uploaded</span>
+                             </>
+                           ) : (
+                             <>
+                               <Upload className="w-8 h-8 text-slate-500 mb-2 group-hover:text-indigo-400 transition-colors" />
+                               <span className="text-xs font-bold text-slate-400 uppercase group-hover:text-slate-200">Latest Salary Slip</span>
+                               <span className="text-[10px] text-slate-600 mt-1">PNG, JPG up to 10MB</span>
+                             </>
+                           )}
+                         </label>
+                      </div>
+                    </div>
+
                     <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
                       <ShieldCheck className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        By submitting, you authorize a <span className="text-indigo-400 font-medium">soft credit inquiry</span> that will <strong className="text-white">not</strong> affect your credit score.
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Our AI scanner will check these documents for authenticity. <span className="text-white">Tampered or fake documents</span> will lead to immediate rejection and account flagging.
                       </p>
                     </div>
                   </motion.div>
@@ -353,8 +505,10 @@ export default function EligibilityForm() {
                     ← Back
                   </button>
                 ) : <div />}
-                <button type="submit" className="btn-primary flex items-center gap-2">
-                  {step === 3 ? 'Check Eligibility' : 'Continue'}
+                <button type="submit" 
+                  disabled={step === 4 && (!documents.aadhaar || !documents.salarySlip)}
+                  className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {step === 4 ? 'Scan & Submit' : 'Continue'}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

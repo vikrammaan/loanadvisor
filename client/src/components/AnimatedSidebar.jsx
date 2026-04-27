@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
-import { History, LayoutDashboard, Calculator, FileText, ChevronLeft, ChevronRight, Settings, Store, Zap } from 'lucide-react';
+import { History, LayoutDashboard, Calculator, FileText, ChevronLeft, ChevronRight, Settings, Store, Zap, Shield } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard',    icon: LayoutDashboard, path: '/dashboard' },
@@ -9,10 +9,20 @@ const navItems = [
   { name: 'Eligibility',  icon: FileText,        path: '/eligibility' },
   { name: 'EMI Calculator', icon: Calculator,    path: '/calculator' },
   { name: 'History',      icon: History,         path: '/history' },
+  { name: 'Admin Panel',  icon: Shield,          path: '/admin' },
 ];
 
 export default function AnimatedSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // Get user data from localStorage
+  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = userData.role === 'admin';
+
+  const filteredNavItems = navItems.filter(item => {
+    if (item.name === 'Admin Panel') return isAdmin;
+    return true;
+  });
 
   return (
     <motion.aside
@@ -51,7 +61,7 @@ export default function AnimatedSidebar() {
 
         {/* Navigation */}
         <nav className="p-3 mt-2 space-y-1">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}

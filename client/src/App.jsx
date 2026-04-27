@@ -8,6 +8,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Marketplace from './pages/Marketplace';
 import History from './pages/History';
+import AdminDashboard from './pages/AdminDashboard';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -58,6 +59,11 @@ function App() {
             <Route path="eligibility" element={<EligibilityForm />} />
             <Route path="calculator" element={<EMICalculator />} />
             <Route path="history" element={<History />} />
+            <Route path="admin" element={
+              JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' 
+                ? <AdminDashboard /> 
+                : <Navigate to="/dashboard" replace />
+            } />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
           </Route>

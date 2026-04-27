@@ -13,7 +13,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Models
 const Loan = require('./models/Loan');
@@ -120,7 +121,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     user.otpExpires = undefined;
     await user.save();
 
-    res.json({ token: 'mock_jwt_token', user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled } });
+    res.json({ token: 'mock_jwt_token', user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled, role: user.role } });
   } catch (error) {
     console.error('Verify error:', error);
     res.status(500).json({ error: 'Failed to verify OTP' });
@@ -159,7 +160,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.json({ requiresOTP: true, email });
     }
     
-    res.json({ token: 'mock_jwt_token', user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled } });
+    res.json({ token: 'mock_jwt_token', user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled, role: user.role } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Failed to login' });
@@ -219,20 +220,119 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Loan Eligibility API
+// Loan Eligibility API & Fraud Detection
 app.post('/api/eligibility', async (req, res) => {
   try {
-    const { name, email, income, employmentStatus, requestedAmount, purpose } = req.body;
-    const isEligible = income > (requestedAmount * 0.3);
+    const { name, email, income, employmentStatus, requestedAmount, purpose, documents } = req.body;
+    
+    // Fraud Detection Logic
+    let fraudScore = 0;
+    const fraudFlags = [];
+
+    // Rule 1: Unusual Income Pattern
+    if (requestedAmount > income * 15) {
+      fraudScore += 40;
+      fraudFlags.push('High risk: Requested amount exceeds 15x monthly income');
+    }
+
+    // Rule 2: Document Verification
+    if (!documents || documents.length === 0) {
+      fraudScore += 30;
+      fraudFlags.push('Missing documents');
+    } else {
+      // Simulate fake document detection (random chance)
+      if (Math.random() < 0.05) {
+        fraudScore += 50;
+        fraudFlags.push('Suspicious document detected by scanner');
+      }
+    }
+
+    // Determine initial status based on fraud score
+    let status = 'pending';
+    let isEligible = true;
+    
+    if (fraudScore >= 70) {
+      status = 'rejected';
+      isEligible = false;
+      fraudFlags.push('Auto-rejected due to high fraud score');
+    } else if (income > (requestedAmount * 0.3)) {
+      isEligible = true;
+    } else {
+      isEligible = false;
+      status = 'rejected';
+      fraudFlags.push('Failed basic eligibility criteria');
+    }
+
     const approvedAmount = isEligible ? income * 3 : 0;
     const interestRate = isEligible ? 5.5 : null;
 
-    const loanApp = new Loan({ name, email, income, employmentStatus, requestedAmount, purpose, isEligible, approvedAmount, interestRate });
+    const loanApp = new Loan({ 
+      name, email, income, employmentStatus, requestedAmount, purpose, 
+      isEligible, approvedAmount, interestRate, status, documents, fraudScore, fraudFlags 
+    });
     await loanApp.save();
 
-    res.json({ eligible: isEligible, maxAmount: approvedAmount, rate: interestRate });
+    res.json({ eligible: isEligible, maxAmount: approvedAmount, rate: interestRate, fraudScore, status, flags: fraudFlags });
   } catch (error) {
+    console.error('Eligibility error:', error);
     res.status(500).json({ error: 'Failed to process loan application' });
+  }
+});
+
+// Admin Routes
+app.get('/api/admin/loans', async (req, res) => {
+  try {
+    const email = req.headers['x-admin-email'];
+    const adminUser = await User.findOne({ email, role: 'admin' });
+    
+    if (!adminUser) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access only' });
+    }
+
+    const loans = await Loan.find().sort('-createdAt');
+    res.json(loans);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch loans' });
+  }
+});
+
+app.post('/api/admin/loans/:id', async (req, res) => {
+  try {
+    const email = req.headers['x-admin-email'];
+    const adminUser = await User.findOne({ email, role: 'admin' });
+    
+    if (!adminUser) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access only' });
+    }
+
+    const { status, interestRate, approvedAmount } = req.body;
+    const loan = await Loan.findById(req.params.id);
+    if (!loan) return res.status(404).json({ error: 'Loan not found' });
+
+    if (status) loan.status = status;
+    if (interestRate !== undefined) loan.interestRate = interestRate;
+    if (approvedAmount !== undefined) loan.approvedAmount = approvedAmount;
+    
+    await loan.save();
+    res.json(loan);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update loan' });
+  }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const email = req.headers['x-admin-email'];
+    const adminUser = await User.findOne({ email, role: 'admin' });
+    
+    if (!adminUser) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access only' });
+    }
+
+    const users = await User.find().select('-password -otp').sort('-createdAt');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
 
