@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const { OpenAI } = require('openai');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const path = require('path');
 
 dotenv.config();
 
@@ -17,9 +18,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Models
-const Loan = require('./models/Loan');
-const Chat = require('./models/Chat');
-const User = require('./models/User');
+const Loan = require(path.join(__dirname, 'models/Loan'));
+const Chat = require(path.join(__dirname, 'models/Chat'));
+const User = require(path.join(__dirname, 'models/User'));
 
 // Connect to MongoDB
 const dbUri = process.env.MONGODB_URI || 'mongodb+srv://maanvikram617_db_user:GJwaZm47.pj-hPi@cluster0.wfhvwat.mongodb.net/loanadvisor';
