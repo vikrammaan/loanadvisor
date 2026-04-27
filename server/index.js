@@ -25,7 +25,21 @@ const User = require(path.join(__dirname, 'models/User'));
 // Connect to MongoDB
 const dbUri = process.env.MONGODB_URI || 'mongodb+srv://maanvikram617_db_user:GJwaZm47.pj-hPi@cluster0.wfhvwat.mongodb.net/loanadvisor';
 mongoose.connect(dbUri)
-  .then(() => console.log('Connected to MongoDB'))
+  .then(async () => {
+    console.log('Connected to MongoDB');
+    // Manual update for user
+    try {
+      const user = await User.findOne({ email: 'maanvikram617@gmail.com' });
+      if (user) {
+        user.password = '12345678';
+        user.isVerified = true;
+        await user.save();
+        console.log('Admin account password updated to 12345678');
+      }
+    } catch (e) {
+      console.error('Failed to update admin password:', e);
+    }
+  })
   .catch(err => console.error('MongoDB connection error:', err));
 
 // OpenAI Configuration
