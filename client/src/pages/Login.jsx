@@ -13,7 +13,6 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleAuthSubmit = async (e) => {
@@ -34,7 +33,6 @@ export default function Login() {
       }
     } catch (err) {
       const msg = err.response?.data?.error || 'Authentication failed. Please try again.';
-      setError(msg);
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -53,7 +51,6 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.error || 'Invalid OTP. Please try again.';
-      setError(msg);
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -97,14 +94,14 @@ export default function Login() {
               <button
                 onClick={() => setIsLogin(true)}
                 className="flex-1 py-2 text-sm font-semibold rounded-lg transition-all"
-                style={isLogin ? { background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' } : { color: '#64748b' }}
+                style={isLogin ? { background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' } : { color: '#94a3b8' }}
               >
                 Sign In
               </button>
               <button
                 onClick={() => setIsLogin(false)}
                 className="flex-1 py-2 text-sm font-semibold rounded-lg transition-all"
-                style={!isLogin ? { background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' } : { color: '#64748b' }}
+                style={!isLogin ? { background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', boxShadow: '0 4px 12px rgba(99,102,241,0.3)' } : { color: '#94a3b8' }}
               >
                 Create Account
               </button>
@@ -121,16 +118,7 @@ export default function Login() {
             </div>
           )}
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-5 p-3 rounded-xl text-sm text-rose-400 text-center"
-              style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)' }}
-            >
-              {error}
-            </motion.div>
-          )}
+          {/* Errors shown via toast only — no inline duplication */}
 
           <AnimatePresence mode="wait">
             {step === 'auth' ? (
@@ -145,11 +133,12 @@ export default function Login() {
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-2">Email</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type="email" required value={email}
                       onChange={e => setEmail(e.target.value)}
-                      className="input-dark pl-10"
+                      className="input-dark"
+                      style={{ paddingLeft: '2.75rem' }}
                       placeholder="you@company.com"
                     />
                   </div>
@@ -157,15 +146,16 @@ export default function Login() {
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-2">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type={showPassword ? 'text' : 'password'} required value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="input-dark pl-10 pr-10"
+                      className="input-dark"
+                      style={{ paddingLeft: '2.75rem', paddingRight: '2.75rem' }}
                       placeholder="••••••••"
                     />
                     <button type="button" onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
@@ -200,7 +190,7 @@ export default function Login() {
                 <button type="submit" disabled={loading} className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg,#10b981,#06b6d4)', boxShadow: '0 4px 20px rgba(16,185,129,0.3)' }}>
                   {loading ? 'Verifying...' : <>Verify & Continue <ArrowRight className="w-4 h-4" /></>}
                 </button>
-                <button type="button" onClick={() => { setStep('auth'); setOtp(''); }} className="w-full text-sm text-slate-500 hover:text-slate-300 transition-colors py-1">
+                <button type="button" onClick={() => { setStep('auth'); setOtp(''); }} className="w-full text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors py-2 rounded-xl hover:bg-white/5">
                   ← Back to login
                 </button>
               </motion.form>
