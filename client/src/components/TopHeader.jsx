@@ -8,6 +8,8 @@ import { useNotifications } from '../context/NotificationContext';
 export default function TopHeader() {
   const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const { notifications, unreadCount, markAllRead } = useNotifications();
@@ -22,6 +24,22 @@ export default function TopHeader() {
     localStorage.removeItem('user');
     navigate('/login');
   };
+
+  const searchablePages = [
+    { title: 'Dashboard', path: '/dashboard', keywords: 'home overview stats main' },
+    { title: 'Marketplace', path: '/marketplace', keywords: 'loans providers banks apply borrow' },
+    { title: 'Eligibility Check', path: '/eligibility', keywords: 'score check eligible form' },
+    { title: 'EMI Calculator', path: '/calculator', keywords: 'math interest monthly payment' },
+    { title: 'Application History', path: '/history', keywords: 'past status processing timeline' },
+    { title: 'Profile Settings', path: '/profile', keywords: 'user account security password' }
+  ];
+
+  const searchResults = searchQuery.trim() 
+    ? searchablePages.filter(p => 
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        p.keywords.includes(searchQuery.toLowerCase())
+      )
+    : [];
 
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -46,17 +64,63 @@ export default function TopHeader() {
       }}
     >
       {/* Search */}
-      <div className="flex-1 max-w-md">
+      <div className="flex-1 max-w-md relative z-50">
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors"
             style={{ color: 'var(--c-text-faint)' }} />
           <input
             type="text"
-            placeholder="Search anything..."
-            className="input-dark pl-10 py-2 text-sm"
+            placeholder="Search pages or features..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowSearch(true);
+            }}
+            onFocus={() => setShowSearch(true)}
+            onBlur={() => setTimeout(() => setShowSearch(false), 200)}
+            className="input-dark pl-10 py-2 text-sm w-full transition-all"
             style={{ borderRadius: '10px' }}
           />
         </div>
+        
+        <AnimatePresence>
+          {showSearch && searchQuery.trim() && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 4, scale: 0.98 }}
+              className="absolute left-0 right-0 top-full mt-2 rounded-xl overflow-hidden shadow-2xl z-50"
+              style={{ background: 'var(--c-bg-secondary)', border: '1px solid var(--c-border)' }}
+            >
+              {searchResults.length > 0 ? (
+                <div className="p-2 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider px-3 pt-1 pb-2" style={{ color: 'var(--c-text-faint)' }}>Quick Links</p>
+                  {searchResults.map(res => (
+                    <button
+                      key={res.path}
+                      onClick={() => {
+                        navigate(res.path);
+                        setSearchQuery('');
+                        setShowSearch(false);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-left transition-colors"
+                      style={{ color: 'var(--c-text)' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--c-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span className="font-medium">{res.title}</span>
+                      <span className="text-xs" style={{ color: 'var(--c-text-faint)' }}>Jump to</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-sm" style={{ color: 'var(--c-text-muted)' }}>
+                  No results found for "{searchQuery}"
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="flex items-center gap-3 ml-4">

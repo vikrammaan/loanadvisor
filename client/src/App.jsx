@@ -7,6 +7,7 @@ import EMICalculator from './pages/EMICalculator';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Marketplace from './pages/Marketplace';
+import History from './pages/History';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -56,6 +57,7 @@ function App() {
             <Route path="marketplace" element={<Marketplace />} />
             <Route path="eligibility" element={<EligibilityForm />} />
             <Route path="calculator" element={<EMICalculator />} />
+            <Route path="history" element={<History />} />
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
           </Route>
