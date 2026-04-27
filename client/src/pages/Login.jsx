@@ -31,8 +31,9 @@ export default function Login() {
         navigate('/dashboard');
       }
     } catch (err) {
-      const msg = err.response?.data?.error || 'Authentication failed. Please try again.';
-      toast.error(msg);
+      console.error('Auth error:', err);
+      const msg = err.response?.data?.error || err.message || 'Authentication failed. Please try again.';
+      toast.error(msg, { duration: 5000 });
     } finally {
       setLoading(false);
     }
