@@ -1,9 +1,42 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Lock, Moon, Globe, Shield } from 'lucide-react';
+import { Bell, Moon, Shield, Globe, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useTheme } from '../context/ThemeContext';
+
+function Toggle({ enabled, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
+      style={{ background: enabled ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(255,255,255,0.1)', boxShadow: enabled ? '0 0 12px rgba(99,102,241,0.4)' : 'none' }}
+    >
+      <motion.span
+        animate={{ x: enabled ? 22 : 2 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+      />
+    </button>
+  );
+}
+
+function SettingRow({ icon: Icon, iconColor, title, description, children }) {
+  return (
+    <div className="flex items-center justify-between py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      <div className="flex items-center gap-4">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${iconColor}15` }}>
+          <Icon className="w-4 h-4" style={{ color: iconColor }} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-slate-200">{title}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function Settings() {
   const { isDark, toggleTheme } = useTheme();
@@ -22,114 +55,74 @@ export default function Settings() {
 
   const handleSave = async () => {
     try {
-      const res = await axios.post('/api/user/settings', {
-        email,
-        twoFactorEnabled: twoFactor
-      });
-      
-      // update local storage
+      const res = await axios.post('/api/user/settings', { email, twoFactorEnabled: twoFactor });
       const userStr = localStorage.getItem('user');
       if (userStr) {
         const user = JSON.parse(userStr);
         user.twoFactorEnabled = res.data.twoFactorEnabled;
         localStorage.setItem('user', JSON.stringify(user));
       }
-
-      toast.success('Preferences saved successfully!');
-    } catch (err) {
+      toast.success('Preferences saved!');
+    } catch {
       toast.error('Failed to save preferences.');
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
+    <div className="max-w-2xl mx-auto py-2">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Settings</h1>
-        <p className="text-slate-500 dark:text-slate-400">Manage your application preferences and security.</p>
+        <h1 className="text-2xl font-bold text-white mb-1">Settings</h1>
+        <p className="text-slate-500 text-sm">Manage your preferences and account security.</p>
       </div>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
-        {/* Appearance & Language */}
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-            <Globe className="w-5 h-5 text-indigo-500" />
-            General
-          </h2>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-700 dark:text-slate-200">Dark Mode</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Switch to a dark theme for low-light environments.</p>
-              </div>
-              <button 
-                onClick={toggleTheme}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isDark ? 'bg-indigo-600' : 'bg-slate-200'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+
+        {/* Appearance */}
+        <div className="glass-card rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Appearance</h2>
           </div>
+          <SettingRow icon={Moon} iconColor="#a78bfa" title="Dark Mode" description="Switch between dark and light theme.">
+            <Toggle enabled={isDark} onToggle={toggleTheme} />
+          </SettingRow>
         </div>
 
         {/* Notifications */}
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-            <Bell className="w-5 h-5 text-indigo-500" />
-            Notifications
-          </h2>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-700 dark:text-slate-200">Email Alerts</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Receive updates about your loan applications.</p>
-              </div>
-              <button 
-                onClick={() => setNotifications(!notifications)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${notifications ? 'bg-indigo-600' : 'bg-slate-200'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${notifications ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
+        <div className="glass-card rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Bell className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Notifications</h2>
           </div>
+          <SettingRow icon={Bell} iconColor="#06b6d4" title="Email Alerts" description="Receive updates about your loan applications.">
+            <Toggle enabled={notifications} onToggle={() => setNotifications(v => !v)} />
+          </SettingRow>
         </div>
 
         {/* Security */}
-        <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-indigo-500" />
-            Security
-          </h2>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-700 dark:text-slate-200">Two-Factor Authentication (2FA)</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Receive an OTP email when logging in to secure your account.</p>
-              </div>
-              <button 
-                onClick={() => setTwoFactor(!twoFactor)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${twoFactor ? 'bg-indigo-600' : 'bg-slate-200'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${twoFactor ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
+        <div className="glass-card rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Security</h2>
+          </div>
+          <SettingRow icon={Shield} iconColor="#10b981" title="Two-Factor Authentication" description="Require an OTP email on every login.">
+            <Toggle enabled={twoFactor} onToggle={() => setTwoFactor(v => !v)} />
+          </SettingRow>
+          <div className="mt-4 p-4 rounded-xl" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              {twoFactor
+                ? '🔒 2FA is enabled. You will be asked to verify your email OTP each time you sign in.'
+                : '⚠️ 2FA is disabled. Enable it for extra security — you\'ll get an OTP on login.'}
+            </p>
           </div>
         </div>
-        
-        <div className="flex justify-end">
-          <button 
-            onClick={handleSave}
-            className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200"
-          >
-            Save Preferences
-          </button>
-        </div>
+
+        <button
+          onClick={handleSave}
+          className="btn-primary w-full text-center"
+        >
+          Save All Preferences
+        </button>
       </motion.div>
     </div>
   );

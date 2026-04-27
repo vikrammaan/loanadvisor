@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Search, User, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Bell, Search, User, LogOut, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -10,9 +10,7 @@ export default function TopHeader() {
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
+    if (userData) setUser(JSON.parse(userData));
   }, []);
 
   const handleLogout = () => {
@@ -21,112 +19,133 @@ export default function TopHeader() {
     navigate('/login');
   };
 
+  const initials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U';
+
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 sticky top-0">
-      <div className="flex-1 max-w-xl">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+    <header
+      className="h-16 flex items-center justify-between px-6 flex-shrink-0 relative z-20"
+      style={{
+        background: 'rgba(8, 12, 20, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
+      }}
+    >
+      {/* Search */}
+      <div className="flex-1 max-w-md">
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
           <input
             type="text"
-            placeholder="Search loans, clients, or reports..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+            placeholder="Search anything..."
+            className="input-dark pl-10 py-2 text-sm"
+            style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '10px' }}
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-6 ml-4">
-        {/* Notifications */}
+      <div className="flex items-center gap-3 ml-4">
+        {/* Notification Bell */}
         <div className="relative">
-          <button 
-            className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+          <button
             onClick={() => setDropdownOpen(dropdownOpen === 'notifications' ? false : 'notifications')}
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-all"
           >
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full ring-2 ring-[#080c14]" />
           </button>
-          
+
           <AnimatePresence>
             {dropdownOpen === 'notifications' && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden"
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-11 w-80 rounded-2xl overflow-hidden z-50"
+                style={{ background: '#0d1220', border: '1px solid rgba(99,102,241,0.2)', boxShadow: '0 16px 48px rgba(0,0,0,0.6)' }}
               >
-                <div className="p-4 border-b border-slate-100">
-                  <h3 className="font-semibold text-slate-800">Notifications</h3>
+                <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <h3 className="font-semibold text-slate-200 text-sm">Notifications</h3>
+                  <span className="badge badge-indigo">2 new</span>
                 </div>
-                <div className="max-h-80 overflow-y-auto">
-                  <div className="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer">
-                    <p className="text-sm font-medium text-slate-800">Security Alert</p>
-                    <p className="text-xs text-slate-500 mt-1">New login from Chrome on Windows.</p>
-                    <p className="text-xs text-indigo-500 mt-2">2 minutes ago</p>
-                  </div>
-                  <div className="p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer">
-                    <p className="text-sm font-medium text-slate-800">Report Generated</p>
-                    <p className="text-xs text-slate-500 mt-1">Your monthly portfolio report is ready to download.</p>
-                    <p className="text-xs text-indigo-500 mt-2">1 hour ago</p>
-                  </div>
+                <div className="max-h-72 overflow-y-auto">
+                  {[
+                    { title: 'Security Alert', body: 'New login detected from Chrome on Windows.', time: '2 min ago', dot: 'bg-rose-500' },
+                    { title: 'Report Generated', body: 'Your monthly portfolio report is ready.', time: '1 hour ago', dot: 'bg-emerald-500' },
+                    { title: 'Rate Update', body: 'Upstart lowered their APR to 7.9%.', time: '3 hours ago', dot: 'bg-indigo-500' },
+                  ].map((n, i) => (
+                    <div key={i} className="p-4 hover:bg-white/5 transition-colors cursor-pointer" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.dot}`} />
+                        <div>
+                          <p className="text-sm font-medium text-slate-200">{n.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{n.body}</p>
+                          <p className="text-xs text-indigo-500 mt-1">{n.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="p-3 text-center border-t border-slate-100">
-                  <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">View all notifications</button>
+                <div className="p-3 text-center" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <button className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors">View all notifications</button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Profile Dropdown */}
+        {/* Divider */}
+        <div className="w-px h-6" style={{ background: 'rgba(255,255,255,0.08)' }} />
+
+        {/* Profile */}
         <div className="relative">
-          <div 
-            className="flex items-center gap-3 cursor-pointer group"
+          <button
             onClick={() => setDropdownOpen(dropdownOpen === 'profile' ? false : 'profile')}
+            className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-white/5 transition-all"
           >
-            <div className="text-right hidden md:block">
-              <p className="text-sm font-semibold text-slate-700 group-hover:text-indigo-600 transition-colors">
-                {user ? user.name : 'Guest'}
-              </p>
-              <p className="text-xs text-slate-500">{user ? 'Premium Member' : 'Sign in required'}</p>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ boxShadow: '0 0 12px rgba(99,102,241,0.4)' }}>
+              {initials}
             </div>
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]"
-            >
-              <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
-                <User className="w-6 h-6 text-slate-300 mt-2" />
-              </div>
-            </motion.div>
-          </div>
+            <div className="hidden md:block text-left">
+              <p className="text-sm font-semibold text-slate-200 leading-none">{user?.name || 'User'}</p>
+              <p className="text-xs text-slate-500 mt-0.5">Premium</p>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500 hidden md:block" />
+          </button>
 
           <AnimatePresence>
             {dropdownOpen === 'profile' && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden"
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-11 w-52 rounded-2xl overflow-hidden z-50"
+                style={{ background: '#0d1220', border: '1px solid rgba(99,102,241,0.2)', boxShadow: '0 16px 48px rgba(0,0,0,0.6)' }}
               >
-                <div className="p-2 space-y-1">
-                  <Link 
+                <div className="p-3 space-y-0.5">
+                  <Link
                     to="/profile"
                     onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
                   >
-                    <User className="w-4 h-4" /> Profile
+                    <User className="w-4 h-4 text-slate-500" /> My Profile
                   </Link>
-                  <Link 
+                  <Link
                     to="/settings"
                     onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
                   >
-                    <SettingsIcon className="w-4 h-4" /> Settings
+                    <SettingsIcon className="w-4 h-4 text-slate-500" /> Settings
                   </Link>
-                  <div className="h-px bg-slate-100 my-1"></div>
-                  <button 
+                  <div className="h-px my-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl transition-colors"
                   >
-                    <LogOut className="w-4 h-4" /> Log out
+                    <LogOut className="w-4 h-4" /> Sign out
                   </button>
                 </div>
               </motion.div>
