@@ -107,12 +107,17 @@ app.post('/api/auth/register', async (req, res) => {
     console.log(`\n\n--- OTP for ${email}: ${otp} ---\n\n`); // Log to console for easy testing
 
     if (transporter) {
-      await transporter.sendMail({
-        from: '"FinAdvisor" <noreply@finadvisor.com>',
-        to: email,
-        subject: "Your Registration OTP",
-        text: `Your OTP is: ${otp}`,
-      });
+      try {
+        await transporter.sendMail({
+          from: '"FinAdvisor" <noreply@finadvisor.com>',
+          to: email,
+          subject: "Your Registration OTP",
+          text: `Your OTP is: ${otp}`,
+        });
+      } catch (mailError) {
+        console.error('Failed to send registration email:', mailError.message);
+        // We don't throw error here so registration can still proceed in dev
+      }
     }
     
     res.json({ message: 'OTP sent to email', requiresOTP: true, email });
@@ -174,12 +179,16 @@ app.post('/api/auth/login', async (req, res) => {
       console.log(`\n\n--- 2FA OTP for ${email}: ${otp} ---\n\n`);
 
       if (transporter) {
-        await transporter.sendMail({
-          from: '"FinAdvisor" <noreply@finadvisor.com>',
-          to: email,
-          subject: "Your 2FA Login OTP",
-          text: `Your login OTP is: ${otp}`,
-        });
+        try {
+          await transporter.sendMail({
+            from: '"FinAdvisor" <noreply@finadvisor.com>',
+            to: email,
+            subject: "Your 2FA Login OTP",
+            text: `Your login OTP is: ${otp}`,
+          });
+        } catch (mailError) {
+          console.error('Failed to send 2FA email:', mailError.message);
+        }
       }
       return res.json({ requiresOTP: true, email });
     }
@@ -207,12 +216,16 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     console.log(`\n\n--- Forgot Password OTP for ${email}: ${otp} ---\n\n`);
     
     if (transporter) {
-      await transporter.sendMail({
-        from: '"FinAdvisor" <noreply@finadvisor.com>',
-        to: email,
-        subject: "Password Reset OTP",
-        text: `Your password reset OTP is: ${otp}`,
-      });
+      try {
+        await transporter.sendMail({
+          from: '"FinAdvisor" <noreply@finadvisor.com>',
+          to: email,
+          subject: "Password Reset OTP",
+          text: `Your password reset OTP is: ${otp}`,
+        });
+      } catch (mailError) {
+        console.error('Failed to send reset email:', mailError.message);
+      }
     }
 
     res.json({ message: 'OTP sent to email' });
