@@ -77,7 +77,7 @@ export default function Dashboard() {
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
       {/* Hero */}
-      <motion.div variants={fadeUp} className="relative rounded-3xl overflow-hidden p-8 sm:p-10"
+      <motion.div variants={fadeUp} className="relative rounded-3xl overflow-hidden p-6 sm:p-10"
         style={{
           background: isDark
             ? 'linear-gradient(135deg, #1e1040 0%, #0f172a 50%, #0c1a2e 100%)'
@@ -92,7 +92,7 @@ export default function Dashboard() {
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
             Live Dashboard
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3 leading-tight" style={{ color: 'var(--c-text)' }}>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-3 leading-tight" style={{ color: 'var(--c-text)' }}>
             Welcome back{user ? `, ${user.name.split(' ')[0]}` : ''}! 👋
           </h1>
           <p className="text-base mb-8 max-w-lg" style={{ color: 'var(--c-text-muted)' }}>

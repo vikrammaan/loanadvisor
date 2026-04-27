@@ -112,7 +112,7 @@ export default function Login() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2.5 mb-4">
+          <div className="inline-flex items-center gap-2.5 mb-2 sm:mb-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg" style={{ boxShadow: '0 0 20px rgba(99,102,241,0.5)' }}>
               <Zap className="w-5 h-5 text-white" />
             </div>
@@ -121,7 +121,7 @@ export default function Login() {
           <p className="text-slate-500 text-sm">Real-Time Loan Eligibility & AI Insights</p>
         </div>
 
-        <div className="rounded-3xl p-8" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(30px)', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}>
+        <div className="rounded-3xl p-6 sm:p-8" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(30px)', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}>
 
           {/* Tab toggle */}
           {step === 'auth' && (
@@ -193,7 +193,7 @@ export default function Login() {
                       <button
                         type="button"
                         onClick={handleForgotPassword}
-                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
                       >
                         {resetLoading ? 'Sending...' : 'Forgot Password?'}
                       </button>

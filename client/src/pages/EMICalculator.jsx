@@ -128,18 +128,18 @@ export default function EMICalculator() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-2">
+    <div className="max-w-6xl mx-auto py-2 px-4 sm:px-0">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">EMI Calculator</h1>
           <p className="text-slate-500 text-sm">Plan your loan with real-time interactive calculations.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={reset} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
-            <RefreshCw className="w-4 h-4" /> Reset
+          <button onClick={reset} className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+            <RefreshCw className="w-4 h-4" /> <span className="hidden sm:inline">Reset</span>
           </button>
-          <button onClick={handleDownload} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium btn-primary">
-            <Download className="w-4 h-4" /> Export CSV
+          <button onClick={handleDownload} className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium btn-primary">
+            <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export CSV</span><span className="sm:hidden">Export</span>
           </button>
         </div>
       </div>
@@ -184,7 +184,7 @@ export default function EMICalculator() {
           {/* Manual Input Fields */}
           <div className="border-t pt-5 mt-1 space-y-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <p className="text-xs text-slate-500 mb-3">Or type exact values:</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { label: 'Amount $', value: amount, set: setAmount, prefix: '$' },
                 { label: 'Rate %', value: rate, set: setRate, step: '0.1' },
@@ -223,7 +223,7 @@ export default function EMICalculator() {
               <p className="text-xs text-slate-500 mt-2">per month for {months} months</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
               {[
                 { label: 'Principal', value: `$${amount.toLocaleString()}`, icon: DollarSign, color: '#6366f1' },
                 { label: 'Total Interest', value: `$${totalInterest.toLocaleString()}`, icon: Percent, color: '#f59e0b' },

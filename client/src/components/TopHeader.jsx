@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Bell, Search, User, LogOut, Settings as SettingsIcon, ChevronDown, Sun, Moon } from 'lucide-react';
+import { Bell, Search, User, LogOut, Settings as SettingsIcon, ChevronDown, Sun, Moon, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
 
-export default function TopHeader() {
+export default function TopHeader({ onMenuClick }) {
   const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,6 +63,15 @@ export default function TopHeader() {
         transition: 'background 0.3s ease',
       }}
     >
+      {/* Sidebar Toggle (Mobile) */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-2 -ml-2 mr-2 rounded-xl transition-colors hover:bg-white/5"
+        style={{ color: 'var(--c-text-muted)' }}
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+
       {/* Search */}
       <div className="flex-1 max-w-md relative z-50">
         <div className="relative group">
@@ -70,7 +79,7 @@ export default function TopHeader() {
             style={{ color: 'var(--c-text-faint)' }} />
           <input
             type="text"
-            placeholder="Search pages or features..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -234,7 +243,7 @@ export default function TopHeader() {
               <p className="text-sm font-semibold leading-none" style={{ color: 'var(--c-text)' }}>{user?.name || 'User'}</p>
               <p className="text-xs mt-0.5" style={{ color: 'var(--c-text-faint)' }}>Premium</p>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 hidden md:block" style={{ color: 'var(--c-text-faint)' }} />
+            <ChevronDown className="w-3.5 h-3.5 hidden lg:block" style={{ color: 'var(--c-text-faint)' }} />
           </button>
 
           <AnimatePresence>
