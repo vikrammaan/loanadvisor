@@ -5,7 +5,7 @@ import { Wallet, TrendingUp, Users, ArrowUpRight, FileText, ArrowRight } from 'l
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
-const chartData = [
+const INITIAL_CHART_DATA = [
   { name: 'Jan', approvals: 4000, applications: 2400 },
   { name: 'Feb', approvals: 3000, applications: 1398 },
   { name: 'Mar', approvals: 5200, applications: 9800 },
@@ -19,9 +19,40 @@ export default function Dashboard() {
   const [user, setUser] = useState(null);
   const { isDark } = useTheme();
 
+  // Live State
+  const [chartData, setChartData] = useState(INITIAL_CHART_DATA);
+  const [disbursed, setDisbursed] = useState(2400000);
+  const [activeApps, setActiveApps] = useState(842);
+  const [approvalRate, setApprovalRate] = useState(78.3);
+
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) setUser(JSON.parse(userData));
+
+    // Simulate Live Data Feed
+    const interval = setInterval(() => {
+      // Randomly update stats
+      if (Math.random() > 0.5) {
+        setDisbursed(prev => prev + Math.floor(Math.random() * 5000));
+        setActiveApps(prev => prev + (Math.random() > 0.5 ? 1 : -1));
+        setApprovalRate(prev => {
+          const newRate = prev + (Math.random() * 0.2 - 0.1);
+          return Number(Math.min(100, Math.max(0, newRate)).toFixed(1));
+        });
+
+        // Update the last month's chart data slightly
+        setChartData(prevData => {
+          const newData = [...prevData];
+          const lastMonth = { ...newData[newData.length - 1] };
+          lastMonth.applications += Math.floor(Math.random() * 10);
+          lastMonth.approvals += Math.floor(Math.random() * 8);
+          newData[newData.length - 1] = lastMonth;
+          return newData;
+        });
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const tooltipStyle = {
@@ -35,9 +66,9 @@ export default function Dashboard() {
   const tickColor = isDark ? '#475569' : '#94a3b8';
 
   const stats = [
-    { title: 'Total Disbursed', value: '$2.4M', icon: Wallet, trend: '+12.5%', from: '#6366f1', to: '#8b5cf6' },
-    { title: 'Active Applications', value: '842', icon: Users, trend: '+5.2%', from: '#06b6d4', to: '#3b82f6' },
-    { title: 'Approval Rate', value: '78.3%', icon: TrendingUp, trend: '+2.1%', from: '#10b981', to: '#06b6d4' },
+    { title: 'Total Disbursed', value: `$${(disbursed / 1000000).toFixed(2)}M`, icon: Wallet, trend: '+12.5%', from: '#6366f1', to: '#8b5cf6' },
+    { title: 'Active Applications', value: activeApps, icon: Users, trend: '+5.2%', from: '#06b6d4', to: '#3b82f6' },
+    { title: 'Approval Rate', value: `${approvalRate}%`, icon: TrendingUp, trend: '+2.1%', from: '#10b981', to: '#06b6d4' },
   ];
 
   const stagger = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
@@ -65,8 +96,8 @@ export default function Dashboard() {
             Welcome back{user ? `, ${user.name.split(' ')[0]}` : ''}! 👋
           </h1>
           <p className="text-base mb-8 max-w-lg" style={{ color: 'var(--c-text-muted)' }}>
-            Your portfolio is performing remarkably well. Approval rate is up{' '}
-            <span className="text-emerald-500 font-semibold">2.1%</span> this week.
+            Your portfolio is performing remarkably well. Approval rate is currently{' '}
+            <span className="text-emerald-500 font-semibold">{approvalRate}%</span> this week.
           </p>
           <div className="flex items-center gap-3">
             <button
@@ -103,7 +134,9 @@ export default function Dashboard() {
               </span>
             </div>
             <p className="text-sm font-medium mb-1" style={{ color: 'var(--c-text-muted)' }}>{stat.title}</p>
-            <p className="text-3xl font-bold" style={{ color: 'var(--c-text)' }}>{stat.value}</p>
+            <motion.p key={stat.value} initial={{ scale: 0.95, opacity: 0.8 }} animate={{ scale: 1, opacity: 1 }} className="text-3xl font-bold" style={{ color: 'var(--c-text)' }}>
+              {stat.value}
+            </motion.p>
           </motion.div>
         ))}
       </div>
@@ -113,7 +146,7 @@ export default function Dashboard() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-base font-semibold" style={{ color: 'var(--c-text)' }}>Applications vs Approvals</h2>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--c-text-faint)' }}>Performance over the last 7 months</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--c-text-faint)' }}>Live performance over the last 7 months</p>
           </div>
           <select className="input-dark text-xs py-1.5 px-3 w-auto" style={{ borderRadius: '10px', width: 'auto' }}>
             <option>Last 6 Months</option>
@@ -137,8 +170,8 @@ export default function Dashboard() {
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: tickColor, fontSize: 11 }} dy={8} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: tickColor, fontSize: 11 }} />
               <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: 'rgba(99,102,241,0.2)', strokeWidth: 1 }} />
-              <Area type="monotone" dataKey="applications" stroke="#8b5cf6" strokeWidth={2.5} fillOpacity={1} fill="url(#gApps)" dot={false} />
-              <Area type="monotone" dataKey="approvals" stroke="#06b6d4" strokeWidth={2.5} fillOpacity={1} fill="url(#gApprovals)" dot={false} />
+              <Area type="monotone" dataKey="applications" stroke="#8b5cf6" strokeWidth={2.5} fillOpacity={1} fill="url(#gApps)" dot={false} isAnimationActive={false} />
+              <Area type="monotone" dataKey="approvals" stroke="#06b6d4" strokeWidth={2.5} fillOpacity={1} fill="url(#gApprovals)" dot={false} isAnimationActive={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

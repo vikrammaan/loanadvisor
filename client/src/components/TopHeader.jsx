@@ -3,12 +3,14 @@ import { Bell, Search, User, LogOut, Settings as SettingsIcon, ChevronDown, Sun,
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useNotifications } from '../context/NotificationContext';
 
 export default function TopHeader() {
   const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
+  const { notifications, unreadCount, markAllRead } = useNotifications();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -88,15 +90,20 @@ export default function TopHeader() {
         {/* Notification Bell */}
         <div className="relative">
           <button
-            onClick={() => setDropdownOpen(dropdownOpen === 'notifications' ? false : 'notifications')}
+            onClick={() => {
+              setDropdownOpen(dropdownOpen === 'notifications' ? false : 'notifications');
+              if (dropdownOpen !== 'notifications') markAllRead();
+            }}
             className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
             style={{ color: 'var(--c-text-muted)' }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--c-hover)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full ring-2"
-              style={{ ringColor: 'var(--c-bg)' }} />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full ring-2 animate-pulse"
+                style={{ ringColor: 'var(--c-bg)' }} />
+            )}
           </button>
 
           <AnimatePresence>
@@ -111,15 +118,14 @@ export default function TopHeader() {
               >
                 <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--c-border-soft)' }}>
                   <h3 className="font-semibold text-sm" style={{ color: 'var(--c-text)' }}>Notifications</h3>
-                  <span className="badge badge-indigo">2 new</span>
+                  {unreadCount > 0 && <span className="badge badge-indigo">{unreadCount} new</span>}
                 </div>
                 <div className="max-h-72 overflow-y-auto">
-                  {[
-                    { title: 'Security Alert', body: 'New login detected from Chrome on Windows.', time: '2 min ago', dot: 'bg-rose-500' },
-                    { title: 'Report Generated', body: 'Your monthly portfolio report is ready.', time: '1 hour ago', dot: 'bg-emerald-500' },
-                    { title: 'Rate Update', body: 'Upstart lowered their APR to 7.9%.', time: '3 hours ago', dot: 'bg-indigo-500' },
-                  ].map((n, i) => (
-                    <div key={i} className="p-4 cursor-pointer transition-colors"
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-sm" style={{ color: 'var(--c-text-muted)' }}>No notifications</div>
+                  ) : (
+                    notifications.map((n, i) => (
+                    <div key={n.id || i} className="p-4 cursor-pointer transition-colors"
                       style={{ borderBottom: '1px solid var(--c-border-soft)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--c-hover)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -129,11 +135,13 @@ export default function TopHeader() {
                         <div>
                           <p className="text-sm font-medium" style={{ color: 'var(--c-text)' }}>{n.title}</p>
                           <p className="text-xs mt-0.5" style={{ color: 'var(--c-text-muted)' }}>{n.body}</p>
-                          <p className="text-xs text-indigo-500 mt-1">{n.time}</p>
+                          <p className="text-xs text-indigo-500 mt-1">
+                            {Math.floor((new Date() - new Date(n.time)) / 60000) < 1 ? 'Just now' : `${Math.floor((new Date() - new Date(n.time)) / 60000)} min ago`}
+                          </p>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )))}
                 </div>
                 <div className="p-3 text-center" style={{ borderTop: '1px solid var(--c-border-soft)' }}>
                   <button className="text-xs font-medium text-indigo-500 hover:text-indigo-400 transition-colors">View all notifications</button>
