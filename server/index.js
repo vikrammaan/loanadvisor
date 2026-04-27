@@ -22,7 +22,7 @@ const Chat = require('./models/Chat');
 const User = require('./models/User');
 
 // Connect to MongoDB
-const dbUri = process.env.MONGODB_URI || 'mongodb+srv://maanvikram617_db_user:143%40Vikram@cluster0.6caz9ej.mongodb.net/loanadvisor';
+const dbUri = process.env.MONGODB_URI || 'mongodb+srv://maanvikram617_db_user:GJwaZm47.pj-hPi@cluster0.wfhvwat.mongodb.net/loanadvisor';
 mongoose.connect(dbUri)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
