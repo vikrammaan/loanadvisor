@@ -6,6 +6,7 @@ import EligibilityForm from './pages/EligibilityForm';
 import EMICalculator from './pages/EMICalculator';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Marketplace from './pages/Marketplace';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
@@ -35,6 +36,7 @@ function App() {
         }>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="marketplace" element={<Marketplace />} />
           <Route path="eligibility" element={<EligibilityForm />} />
           <Route path="calculator" element={<EMICalculator />} />
           <Route path="profile" element={<Profile />} />

@@ -227,6 +227,35 @@ app.post('/api/eligibility', async (req, res) => {
   }
 });
 
+// AI Recommendation API
+app.post('/api/ai-recommendation', async (req, res) => {
+  try {
+    const { amount, purpose, providers } = req.body;
+    let recommendation = "";
+
+    if (openai) {
+      const prompt = `You are an expert financial advisor. A user is looking for a loan of $${amount} for the purpose of "${purpose}". 
+      Here are the available providers: ${JSON.stringify(providers)}. 
+      Which provider is the absolute best match based on lowest interest rates and suitable limits? Respond with a short, 2-3 sentence recommendation explaining your choice.`;
+
+      const completion = await openai.chat.completions.create({
+        messages: [{ role: 'system', content: prompt }],
+        model: 'gpt-3.5-turbo',
+      });
+      recommendation = completion.choices[0].message.content;
+    } else {
+      // Mock AI response if no key is provided
+      const bestProvider = providers.sort((a, b) => a.interestRate - b.interestRate)[0];
+      recommendation = `(Simulated AI) Based on your need for $${amount}, I recommend ${bestProvider.name} because they offer the lowest starting interest rate of ${bestProvider.interestRate}%.`;
+    }
+
+    res.json({ recommendation });
+  } catch (error) {
+    console.error('AI Recommendation Error:', error);
+    res.status(500).json({ error: 'Failed to fetch recommendation' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

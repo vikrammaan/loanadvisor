@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calculator, FileText, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { LayoutDashboard, Calculator, FileText, ChevronLeft, ChevronRight, Settings, Store } from 'lucide-react';
 
 export default function AnimatedSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { name: 'Marketplace', icon: Store, path: '/marketplace' },
     { name: 'Eligibility', icon: FileText, path: '/eligibility' },
     { name: 'EMI Calculator', icon: Calculator, path: '/calculator' },
   ];
