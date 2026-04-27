@@ -18,7 +18,6 @@ export default function Login() {
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const response = await axios.post(endpoint, { email, password });
@@ -42,7 +41,6 @@ export default function Login() {
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
     try {
       const response = await axios.post('/api/auth/verify-otp', { email, otp });
       localStorage.setItem('token', response.data.token);
