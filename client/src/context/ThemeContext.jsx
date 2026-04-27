@@ -5,7 +5,8 @@ const ThemeContext = createContext();
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved === 'dark';
+    // Default to dark if no preference has been saved
+    return saved ? saved === 'dark' : true;
   });
 
   useEffect(() => {
