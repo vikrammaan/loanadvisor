@@ -5,5 +5,15 @@
   "scripts": {
     "install-client": "cd client && npm install",
     "build": "npm run install-client && cd client && npm run build"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.5.0",
+    "nodemailer": "^8.0.6",
+    "openai": "^6.34.0"
   }
 }
