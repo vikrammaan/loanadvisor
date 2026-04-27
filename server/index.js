@@ -22,7 +22,8 @@ const Chat = require('./models/Chat');
 const User = require('./models/User');
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+const dbUri = process.env.MONGODB_URI || 'mongodb+srv://maanvikram617_db_user:143%40Vikram@cluster0.6caz9ej.mongodb.net/loanadvisor';
+mongoose.connect(dbUri)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -121,7 +122,8 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     user.otpExpires = undefined;
     await user.save();
 
-    res.json({ token: 'mock_jwt_token', user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled, role: user.role } });
+    const token = 'mock_jwt_token_' + Math.random().toString(36).substring(7);
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled, role: user.role } });
   } catch (error) {
     console.error('Verify error:', error);
     res.status(500).json({ error: 'Failed to verify OTP' });
@@ -160,7 +162,8 @@ app.post('/api/auth/login', async (req, res) => {
       return res.json({ requiresOTP: true, email });
     }
     
-    res.json({ token: 'mock_jwt_token', user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled, role: user.role } });
+    const token = 'mock_jwt_token_' + Math.random().toString(36).substring(7);
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, twoFactorEnabled: user.twoFactorEnabled, role: user.role } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Failed to login' });
