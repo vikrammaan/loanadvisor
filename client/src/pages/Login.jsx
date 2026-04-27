@@ -15,6 +15,9 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [newPassword, setNewPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -39,12 +42,45 @@ export default function Login() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!email) return toast.error('Please enter your email first');
+    setResetLoading(true);
+    try {
+      await axios.post('/api/auth/forgot-password', { email });
+      setStep('reset');
+      toast.success('Reset OTP sent to your email!', { icon: '📧' });
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to send reset OTP');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/auth/reset-password', { email, otp, newPassword });
+      toast.success(response.data.message, { icon: '✅' });
+      setStep('auth');
+      setIsLogin(true);
+      setOtp('');
+      setNewPassword('');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const response = await axios.post('/api/auth/verify-otp', { email, otp });
-      localStorage.setItem('token', response.data.token);
+      const token = response.data.token;
+      localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       toast.success('Verified! Welcome aboard.', { icon: '✅' });
       navigate('/dashboard');
@@ -117,7 +153,15 @@ export default function Login() {
             </div>
           )}
 
-          {/* Errors shown via toast only — no inline duplication */}
+          {step === 'reset' && (
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-3">
+                <Shield className="w-6 h-6 text-indigo-400" />
+              </div>
+              <h2 className="text-lg font-bold text-white">Reset Password</h2>
+              <p className="text-sm text-slate-500 mt-1">Enter the OTP and your new password.</p>
+            </div>
+          )}
 
           <AnimatePresence mode="wait">
             {step === 'auth' ? (
@@ -143,7 +187,18 @@ export default function Login() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-2">Password</label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-xs font-medium text-slate-400">Password</label>
+                    {isLogin && (
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+                      >
+                        {resetLoading ? 'Sending...' : 'Forgot Password?'}
+                      </button>
+                    )}
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
@@ -167,7 +222,7 @@ export default function Login() {
                   }
                 </button>
               </motion.form>
-            ) : (
+            ) : step === 'otp' ? (
               <motion.form
                 key="otp"
                 initial={{ opacity: 0, x: 10 }}
@@ -191,6 +246,45 @@ export default function Login() {
                 </button>
                 <button type="button" onClick={() => { setStep('auth'); setOtp(''); }} className="w-full text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors py-2 rounded-xl hover:bg-white/5">
                   ← Back to login
+                </button>
+              </motion.form>
+            ) : (
+              <motion.form
+                key="reset"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                onSubmit={handleResetSubmit}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-2">Verification Code</label>
+                  <input
+                    type="text" required value={otp}
+                    onChange={e => setOtp(e.target.value)}
+                    className="input-dark text-center text-xl tracking-widest font-bold"
+                    placeholder="• • • • • •"
+                    maxLength={6}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-2">New Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                      type="password" required value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      className="input-dark"
+                      style={{ paddingLeft: '2.75rem' }}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+                <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2 mt-2">
+                  {loading ? 'Resetting...' : <>Reset Password <ArrowRight className="w-4 h-4" /></>}
+                </button>
+                <button type="button" onClick={() => { setStep('auth'); setOtp(''); }} className="w-full text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors py-2 rounded-xl hover:bg-white/5">
+                  ← Cancel
                 </button>
               </motion.form>
             )}

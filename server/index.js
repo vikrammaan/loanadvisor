@@ -177,6 +177,57 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Forgot Password API
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 10 * 60000);
+    await user.save();
+
+    console.log(`\n\n--- Forgot Password OTP for ${email}: ${otp} ---\n\n`);
+    
+    if (transporter) {
+      await transporter.sendMail({
+        from: '"FinAdvisor" <noreply@finadvisor.com>',
+        to: email,
+        subject: "Password Reset OTP",
+        text: `Your password reset OTP is: ${otp}`,
+      });
+    }
+
+    res.json({ message: 'OTP sent to email' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to process forgot password' });
+  }
+});
+
+// Reset Password API
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (user.otp !== otp || user.otpExpires < new Date()) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    user.password = newPassword;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({ message: 'Password reset successful. You can now login.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
 // Toggle Settings API
 app.post('/api/user/settings', async (req, res) => {
   try {
